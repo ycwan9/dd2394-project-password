@@ -1,0 +1,16 @@
+# Ignore Python bytecode
+__pycache__/
+*.pyc
+
+# Ignore virtual environments
+env/
+
+# Ignore other system-specific files
+.DS_Store
+
+
+# Ignore wordlist
+wordlist.txt
+
+# Ignore rainbow table 
+rainbow_table.pkl

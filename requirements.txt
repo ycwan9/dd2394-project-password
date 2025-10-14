@@ -1,0 +1,4 @@
+## This libraries below are the ones used and neccessary for the project
+pip==24.0
+bcrypt==4.2.0
+matplotlib==3.9.2
