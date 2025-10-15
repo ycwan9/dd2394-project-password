@@ -60,7 +60,7 @@ class BaseRainbowTable(ABC): # Inherit from ABC to make it an abstract base clas
         (Many practical rainbow tables store many chains and use multiple reduction functions;
         this is a simplified version.)
         """
-        self.logger.info("Building rainbow table with %d chains.", len(list(seeds)))
+        self.logger.info("Building rainbow table")
         self.table = {}
         for pwd in seeds:
             start, end = self.build_chain(pwd)
