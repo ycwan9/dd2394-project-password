@@ -14,26 +14,22 @@ class BaseRainbowTable(ABC): # Inherit from ABC to make it an abstract base clas
     using rainbow tables, leaving the specific reduction function to be
     implemented by subclasses.
     """
-    def __init__(self, charset: bytes, max_len: int, chain_len: int, hash_function: Callable[[bytes], bytes], file_object: Optional = None):
+    def __init__(self, chain_len: int, hash_function: Callable[[bytes], bytes], table_file: Optional = None):
         """
         Initializes a BaseRainbowTable object.
 
         Args:
-            charset: The byte string containing the characters allowed in passwords.
-            max_len: The maximum length of passwords to consider.
             chain_len: The length of the chains in the rainbow table.
             hash_function: A callable that takes bytes and returns bytes (e.g., hashlib.sha1().digest).
-            file_object: An optional file-like object to load the rainbow table from.
+            table_file: An optional file-like object to load the rainbow table from.
         """
-        self.charset = charset
-        self.max_len = max_len
         self.chain_len = chain_len
         self.hash_function = hash_function
         self.logger = logging.getLogger(self.__class__.__name__) # Initialize logger with class name
 
 
-        if file_object:
-            self.load_table(file_object)
+        if table_file:
+            self.load_table(table_file)
         else:
             self.table: Dict[bytes, bytes] = {}
 
@@ -52,6 +48,7 @@ class BaseRainbowTable(ABC): # Inherit from ABC to make it an abstract base clas
         Build a chain starting from start_pwd.
         Return (start_pwd, end_value) where end_value is the final reduced password after chain_len steps.
         """
+        self.logger.debug("Building chain starting from: %s", start_pwd)
         cur = start_pwd
         for _ in range(self.chain_len):
             h = self.hash_function(cur)
@@ -65,18 +62,23 @@ class BaseRainbowTable(ABC): # Inherit from ABC to make it an abstract base clas
         (Many practical rainbow tables store many chains and use multiple reduction functions;
         this is a simplified version.)
         """
+        self.logger.info("Building rainbow table with %d chains.", len(list(seeds)))
         self.table = {}
         for pwd in seeds:
             start, end = self.build_chain(pwd)
             self.table[end] = start
 
-    def save_table(self, file_object):
-        """Saves the rainbow table to a file-like object."""
-        pickle.dump(self.table, file_object)
 
-    def load_table(self, file_object):
+    def save_table(self, table_file):
+        """Saves the rainbow table to a file-like object."""
+        pickle.dump(self.table, table_file)
+        self.logger.info("Rainbow table saved with %d chains.", len(self.table))
+
+
+    def load_table(self, table_file):
         """Loads a rainbow table from a file-like object."""
-        self.table = pickle.load(file_object)
+        self.table = pickle.load(table_file)
+        self.logger.info("Rainbow table loaded with %d chains.", len(self.table))
 
 
     def lookup_hash(self, target_hash: bytes) -> bytes:
@@ -107,6 +109,7 @@ class BaseRainbowTable(ABC): # Inherit from ABC to make it an abstract base clas
 
         return None
 
+
 # Child class inheriting from BaseRainbowTable
 class RainbowTable(BaseRainbowTable):
     """
@@ -115,6 +118,22 @@ class RainbowTable(BaseRainbowTable):
     This class extends BaseRainbowTable and provides a specific implementation
     for the abstract reduction_function.
     """
+    def __init__(self, charset: bytes, max_len: int, chain_len: int, hash_function: Callable[[bytes], bytes], table_file: Optional = None):
+        """
+        Initializes a RainbowTable object.
+
+        Args:
+            charset: The byte string containing the characters allowed in passwords.
+            max_len: The maximum length of passwords to consider.
+            chain_len: The length of the chains in the rainbow table.
+            hash_function: A callable that takes bytes and returns bytes (e.g., hashlib.sha1().digest).
+            table_file: An optional file-like object to load the rainbow table from.
+        """
+        super().__init__(chain_len, hash_function, table_file)
+        self.charset = charset
+        self.max_len = max_len
+
+
     def reduction_function(self, hash: bytes) -> bytes:
         """
         Very simple reduction function:
