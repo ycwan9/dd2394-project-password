@@ -24,6 +24,6 @@ class RandomSeededRainbowTableMixin():
                 # can be adjusted based on the expected input size of the hash function
                 # or reduction function if it has specific size constraints.
                 random_seed = random.getrandbits(256).to_bytes(32, 'big') # Generate 32 random bytes
-                yield random_seed
+                yield self.reduction_function(random_seed)
 
         self.build_table(generate_seeds(num_seeds))
