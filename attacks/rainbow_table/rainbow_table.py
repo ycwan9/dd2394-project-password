@@ -26,12 +26,22 @@ class RainbowTable(BaseRainbowTable):
         self.charset = charset
         self.max_len = max_len
 
-    def reduction_function(self, hash: bytes) -> bytes:
+
+    def reduction_function(self, hash: bytes, position: int = 0) -> bytes:
         """
         Very simple reduction function:
         - Use the hash to produce a number,
         - map that number into the space of possible passwords.
         Deterministic but toy — not cryptographically meaningful.
+
+        Args:
+            hash: The hash value to reduce.
+            position: The position in the chain (0-indexed). This parameter is
+                      included to match the base class signature but is not
+                      used in this simple implementation.
+
+        Returns:
+            The reduced password candidate as bytes.
         """
         # take a few bytes, convert to int, map to string
         hash_int = int.from_bytes(hash, 'big')
@@ -40,7 +50,8 @@ class RainbowTable(BaseRainbowTable):
         total_combinations = (len(self.charset) ** (self.max_len+1) - 1) // (len(self.charset) - 1)
 
         # mod by total number
-        hash_int %= total_combinations
+        # Incorporate the position into the reduction (a simple example)
+        hash_int = (hash_int + position) % total_combinations
 
         # Map the integer to a byte string of length up to max_len
         num = hash_int
@@ -65,4 +76,3 @@ class RainbowTable(BaseRainbowTable):
             num -= total_combinations
 
         raise RuntimeError("This should not be reached")
-
