@@ -83,8 +83,7 @@ python main.py --terminal
 
 4.Run the rainbow-table demo directly:
 ```
-python -m attacks.rainbow_table --help
-python -m attacks.rainbow_table --charset abc --max-len 2 --chain-len 3 --random-seeds 3 --log-level INFO
+python rainbow.py --help
 ```
 
 5.Run benchmark :
@@ -112,6 +111,163 @@ Basic password strength checker (toy heuristic)
 ## Documentation on testing the project
 
 This section describes both functional testing (correctness) and performance testing (benchmarks and interpretation).
+
+## Running the rainbow table cracker
+
+The script `rainbow.py` presents a demo of the rainbow table.
+
+```
+$ python3 rainbow.py -h
+usage: rainbow.py [-h] [-c CHARSET] [-m MAX_LEN] [-l CHAIN_LEN] [-a {sha3_384,sha256,sha224,sha3_224,shake_128,shake_256,md5,sha1,sha512,blake2b,sha3_256,sha3_512,sha384,blake2s}]
+                  [--table-file TABLE_FILE] [--random-seeds RANDOM_SEEDS] [--print-steps] [--log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
+                  {build,crack}
+
+Rainbow Table Tool
+
+positional arguments:
+  {build,crack}         Mode of operation: build or crack.
+
+options:
+  -h, --help            show this help message and exit
+  -c CHARSET, --charset CHARSET
+                        The character set to use for passwords. (default: ab)
+  -m MAX_LEN, --max-len MAX_LEN
+                        The maximum length of passwords. (default: 2)
+  -l CHAIN_LEN, --chain-len CHAIN_LEN
+                        The length of the chains in the rainbow table. (default: 3)
+  -a {sha3_384,sha256,sha224,sha3_224,shake_128,shake_256,md5,sha1,sha512,blake2b,sha3_256,sha3_512,sha384,blake2s}, --hash-algorithm {sha3_384,sha256,sha224,sha3_224,shake_128,shake_256,md5,sha1,sha512,blake2b,sha3_256,sha3_512,sha384,blake2s}
+                        Hash algorithm to use. (default: sha1)
+  --table-file TABLE_FILE, -f TABLE_FILE
+                        Path to save/load the rainbow table file. (default: None)
+  --random-seeds RANDOM_SEEDS, -r RANDOM_SEEDS
+                        Number of random seeds to generate (for build mode). (default: None)
+  --print-steps, -p     Print intermediate steps during chain building and cracking. (default: False)
+  --log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}, -L {DEBUG,INFO,WARNING,ERROR,CRITICAL}
+                        Set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL). (default: INFO)
+```
+
+As an example, we build a table with a password space of all permutations of `['a', 'b', 'c']` with maximum length 3. The table are given 3 seeds (`a`, `bb`, `ccc`) for chain building and each chain length is 3. The chains are inspected by printing.
+
+```
+$ python3 rainbow.py -c "abc" -m 3 -l 3 -a sha1 -f /tmp/table.pkl -p build << eof
+a
+bb
+ccc
+eof
+Enter seeds (one per line), press Ctrl+D (EOF) to finish:
+INFO:CustomRainbowTable:Building rainbow table
+
+--- Building chain starting from: a ---
+Step 0: Password: a -> Hash: 86f7e437faa5a7fce15d1ddcb9eaeaea377667b8
+Step 0: Reduced Hash -> Password: bac
+Step 1: Password: bac -> Hash: 5e4dec23c9afa48bd5bee3daa2a0ab66e147012b
+Step 1: Reduced Hash -> Password: aca
+Step 2: Password: aca -> Hash: f64bb73095341d354a088601cad0cdead52f7b75
+Step 2: Reduced Hash -> Password: cca
+--- Chain built: Start: a -> End: cca ---
+
+--- Building chain starting from: bb ---
+Step 0: Password: bb -> Hash: 9a900f538965a426994e1e90600920aff0b4e8d2
+Step 0: Reduced Hash -> Password: ac
+Step 1: Password: ac -> Hash: 0c11d463c749db5838e2c0e489bf869d531e5403
+Step 1: Reduced Hash -> Password: bbc
+Step 2: Password: bbc -> Hash: 0fbe2a58568b4590569588e52ed6a7da4e91b6ab
+Step 2: Reduced Hash -> Password: aca
+--- Chain built: Start: bb -> End: aca ---
+
+--- Building chain starting from: ccc ---
+Step 0: Password: ccc -> Hash: f36b4825e5db2cf7dd2d2593b3f5c24c0311d8b2
+Step 0: Reduced Hash -> Password: bbb
+Step 1: Password: bbb -> Hash: 5cb138284d431abd6a053a56625ec088bfb88912
+Step 1: Reduced Hash -> Password: abc
+Step 2: Password: abc -> Hash: a9993e364706816aba3e25717850c26c9cd0d89d
+Step 2: Reduced Hash -> Password: acc
+--- Chain built: Start: ccc -> End: acc ---
+INFO:CustomRainbowTable:Rainbow table saved with 3 chains.
+Rainbow table built and saved to /tmp/table.pkl
+```
+
+The chains are
+```
+a (86f7e437faa5a7fce15d1ddcb9eaeaea377667b8) ->
+bac (5e4dec23c9afa48bd5bee3daa2a0ab66e147012b) ->
+aca (f64bb73095341d354a088601cad0cdead52f7b75) -> cca
+```
+```
+bb (9a900f538965a426994e1e90600920aff0b4e8d2) ->
+ac (0c11d463c749db5838e2c0e489bf869d531e5403) ->
+bbc (0fbe2a58568b4590569588e52ed6a7da4e91b6ab) -> aca
+```
+```
+ccc (f36b4825e5db2cf7dd2d2593b3f5c24c0311d8b2) ->
+bbb (5cb138284d431abd6a053a56625ec088bfb88912) ->
+abc (a9993e364706816aba3e25717850c26c9cd0d89d) -> acc
+```
+
+
+For cracking, e.g. hash `5cb138284d431abd6a053a56625ec088bfb88912 (bbb)`
+
+```
+$ echo -n bbb | sha1sum 
+5cb138284d431abd6a053a56625ec088bfb88912  -
+$ python3 rainbow.py -c "abc" -m 3 -l 3 -a sha1 -f /tmp/table.pkl -p crack \
+    <<< "5cb138284d431abd6a053a56625ec088bfb88912"
+INFO:CustomRainbowTable:Rainbow table loaded with 3 chains.
+Rainbow table loaded from /tmp/table.pkl with 3 chains.
+Enter hex hashes to crack (one per line), press Ctrl+D (EOF) to finish:
+
+--- Looking up hash: 5cb138284d431abd6a053a56625ec088bfb88912 ---
+Lookup Step 0: Current hash: 5cb138284d431abd6a053a56625ec088bfb88912
+Lookup Step 0: Reduced hash -> Candidate password: abc
+Lookup Step 0: Candidate not found in table. Hashing candidate for next step: a9993e364706816aba3e25717850c26c9cd0d89d
+Lookup Step 1: Current hash: a9993e364706816aba3e25717850c26c9cd0d89d
+Lookup Step 1: Reduced hash -> Candidate password: acc
+Lookup Step 1: Candidate 'acc' found in table. Recreating chain...
+Lookup Step 1: Starting chain recreation from: ccc
+Lookup Step 1, Chain Step 0: Password: ccc -> Hash: f36b4825e5db2cf7dd2d2593b3f5c24c0311d8b2
+Lookup Step 1, Chain Step 0: Reduced Hash -> Password: bbb
+Lookup Step 1, Chain Step 1: Password: bbb -> Hash: 5cb138284d431abd6a053a56625ec088bfb88912
+Lookup Step 1, Chain Step 1: Target hash matched! Found password: bbb
+Cracked 5cb138284d431abd6a053a56625ec088bfb88912: bbb
+
+Cracked 1 out of 1 provided hashes.
+
+```
+
+We can see after the 2nd reduction, it hit `ccc` chain ending `acc`. Then the password is recovered by rebuilding the chain in forward order.
+
+Obviously this table is not comprehensive and some hash cannot be found.
+
+```
+$ echo -n c | sha1sum 
+84a516841ba77a5b4648de2cd0dfcb30ea46dbb4  -
+$ python3 rainbow.py -c "abc" -m 3 -l 3 -a sha1 -f /tmp/table.pkl -p crack \
+    <<< "84a516841ba77a5b4648de2cd0dfcb30ea46dbb4"
+INFO:CustomRainbowTable:Rainbow table loaded with 3 chains.
+Rainbow table loaded from /tmp/table.pkl with 3 chains.
+Enter hex hashes to crack (one per line), press Ctrl+D (EOF) to finish:
+
+--- Looking up hash: 84a516841ba77a5b4648de2cd0dfcb30ea46dbb4 ---
+Lookup Step 0: Current hash: 84a516841ba77a5b4648de2cd0dfcb30ea46dbb4
+Lookup Step 0: Reduced hash -> Candidate password: cbc
+Lookup Step 0: Candidate not found in table. Hashing candidate for next step: 41db5f59263af68fd3c236750c813efd12f6365a
+Lookup Step 1: Current hash: 41db5f59263af68fd3c236750c813efd12f6365a
+Lookup Step 1: Reduced hash -> Candidate password: cba
+Lookup Step 1: Candidate not found in table. Hashing candidate for next step: d9f0509fb7e8bd7d4c4b627dfec70c0c0e01fb34
+Lookup Step 2: Current hash: d9f0509fb7e8bd7d4c4b627dfec70c0c0e01fb34
+Lookup Step 2: Reduced hash -> Candidate password: aa
+Lookup Step 2: Candidate not found in table. Hashing candidate for next step: e0c9035898dd52fc65c41454cec9c4d2611bfb37
+--- Lookup failed: Password not found ---
+Failed to crack 84a516841ba77a5b4648de2cd0dfcb30ea46dbb4
+
+Cracked 0 out of 1 provided hashes.
+```
+
+There's also a more interior testing demo in the package's `__main__`.
+```
+python -m attacks.rainbow_table --help
+python -m attacks.rainbow_table --charset abc --max-len 2 --chain-len 3 --random-seeds 3 --log-level INFO
+```
 
 ## Functional testing (what to run to verify behavior)
 
@@ -255,6 +411,7 @@ He also set up a testing framework for verifying correctness and performance, co
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
+
 
 
 
