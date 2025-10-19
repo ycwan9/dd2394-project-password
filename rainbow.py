@@ -83,7 +83,10 @@ def crack_table_cli(args, hash_func):
 
 
 def main(args_list=None):
-    parser = argparse.ArgumentParser(description="Rainbow Table Tool")
+    parser = argparse.ArgumentParser(
+        description="Rainbow Table Tool",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
     parser.add_argument('mode', choices=['build', 'crack'], help='Mode of operation: build or crack.')
     parser.add_argument('-c', '--charset', type=str, default='ab', help='The character set to use for passwords.')
     parser.add_argument('-m', '--max-len', type=int, default=2, help='The maximum length of passwords.')

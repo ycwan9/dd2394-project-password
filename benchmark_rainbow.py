@@ -18,7 +18,10 @@ def run_benchmark(args_list=None):
                    If None, uses sys.argv (standard command-line arguments).
     """
     # Define and parse arguments
-    parser = argparse.ArgumentParser(description="Rainbow Table Benchmark")
+    parser = argparse.ArgumentParser(
+        description="Rainbow Table Benchmark",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
     parser.add_argument('-c', '--charset', type=str, default='abcdefghijklmnopqrstuvwxyz', help='The character set to use for passwords.') # Enlarged charset
     parser.add_argument('-m', '--max-len', type=int, default=3, help='The maximum length of passwords.')
     parser.add_argument('-l', '--chain-len', type=int, default=10, help='The length of the chains in the rainbow table.')
