@@ -63,7 +63,7 @@ class DemoPrintingMixin():
                     print(f"Lookup Step {i}, Chain Step {k}: Reduced Hash -> Password: {cur.decode()}")
 
             # If not found in the rebuilt chain, continue to the next starting position simulation
-            print(f"Lookup Step {i}: No matching hash found in the chain starting with '{start_plain.decode()}'. Continuing to next simulated position.")
+            print(f"Lookup Step {i}: No matching hash found. Continuing to next simulated position.")
 
 
         print("--- Lookup failed: Password not found ---")

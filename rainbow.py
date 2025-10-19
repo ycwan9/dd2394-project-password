@@ -77,9 +77,6 @@ def crack_table_cli(args, hash_func):
     except FileNotFoundError:
         print(f"Error: Table file not found at {args.table_file}")
         sys.exit(1)
-    except Exception as e:
-        print(f"An error occurred during cracking: {e}")
-        sys.exit(1)
 
 
 def main(args_list=None):
