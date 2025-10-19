@@ -149,40 +149,40 @@ options:
 As an example, we build a table with a password space of all permutations of `['a', 'b', 'c']` with maximum length 3. The table are given 3 seeds (`a`, `bb`, `ccc`) for chain building and each chain length is 3. The chains are inspected by printing.
 
 ```
-$ python3 rainbow.py -c "abc" -m 3 -l 3 -a sha1 -f /tmp/table.pkl -p build << eof
+$ python3 rainbow.py -c "abc" -m 3 -l 3 -a sha1 -f /tmp/table.pkl -p build << eof                                    
 a
 bb
 ccc
 eof
 Enter seeds (one per line), press Ctrl+D (EOF) to finish:
-INFO:CustomRainbowTable:Building rainbow table
+INFO:CustomRainbowTable:Building rainbow table.
 
 --- Building chain starting from: a ---
 Step 0: Password: a -> Hash: 86f7e437faa5a7fce15d1ddcb9eaeaea377667b8
 Step 0: Reduced Hash -> Password: bac
 Step 1: Password: bac -> Hash: 5e4dec23c9afa48bd5bee3daa2a0ab66e147012b
-Step 1: Reduced Hash -> Password: aca
-Step 2: Password: aca -> Hash: f64bb73095341d354a088601cad0cdead52f7b75
-Step 2: Reduced Hash -> Password: cca
---- Chain built: Start: a -> End: cca ---
+Step 1: Reduced Hash -> Password: bca
+Step 2: Password: bca -> Hash: 31428e09ee847e56ed6a08a07d6baff4ce56070c
+Step 2: Reduced Hash -> Password: bcc
+--- Chain built: Start: a -> End: bcc ---
 
 --- Building chain starting from: bb ---
 Step 0: Password: bb -> Hash: 9a900f538965a426994e1e90600920aff0b4e8d2
 Step 0: Reduced Hash -> Password: ac
 Step 1: Password: ac -> Hash: 0c11d463c749db5838e2c0e489bf869d531e5403
-Step 1: Reduced Hash -> Password: bbc
-Step 2: Password: bbc -> Hash: 0fbe2a58568b4590569588e52ed6a7da4e91b6ab
-Step 2: Reduced Hash -> Password: aca
---- Chain built: Start: bb -> End: aca ---
+Step 1: Reduced Hash -> Password: cbc
+Step 2: Password: cbc -> Hash: 41db5f59263af68fd3c236750c813efd12f6365a
+Step 2: Reduced Hash -> Password: bca
+--- Chain built: Start: bb -> End: bca ---
 
 --- Building chain starting from: ccc ---
 Step 0: Password: ccc -> Hash: f36b4825e5db2cf7dd2d2593b3f5c24c0311d8b2
 Step 0: Reduced Hash -> Password: bbb
 Step 1: Password: bbb -> Hash: 5cb138284d431abd6a053a56625ec088bfb88912
-Step 1: Reduced Hash -> Password: abc
-Step 2: Password: abc -> Hash: a9993e364706816aba3e25717850c26c9cd0d89d
-Step 2: Reduced Hash -> Password: acc
---- Chain built: Start: ccc -> End: acc ---
+Step 1: Reduced Hash -> Password: bbc
+Step 2: Password: bbc -> Hash: 0fbe2a58568b4590569588e52ed6a7da4e91b6ab
+Step 2: Reduced Hash -> Password: cca
+--- Chain built: Start: ccc -> End: cca ---
 INFO:CustomRainbowTable:Rainbow table saved with 3 chains.
 Rainbow table built and saved to /tmp/table.pkl
 ```
@@ -191,17 +191,17 @@ The chains are
 ```
 a (86f7e437faa5a7fce15d1ddcb9eaeaea377667b8) ->
 bac (5e4dec23c9afa48bd5bee3daa2a0ab66e147012b) ->
-aca (f64bb73095341d354a088601cad0cdead52f7b75) -> cca
+bca (31428e09ee847e56ed6a08a07d6baff4ce56070c) -> bcc
 ```
 ```
 bb (9a900f538965a426994e1e90600920aff0b4e8d2) ->
 ac (0c11d463c749db5838e2c0e489bf869d531e5403) ->
-bbc (0fbe2a58568b4590569588e52ed6a7da4e91b6ab) -> aca
+cbc (41db5f59263af68fd3c236750c813efd12f6365a) -> bca
 ```
 ```
 ccc (f36b4825e5db2cf7dd2d2593b3f5c24c0311d8b2) ->
 bbb (5cb138284d431abd6a053a56625ec088bfb88912) ->
-abc (a9993e364706816aba3e25717850c26c9cd0d89d) -> acc
+bbc (0fbe2a58568b4590569588e52ed6a7da4e91b6ab) -> cca
 ```
 
 
@@ -217,12 +217,18 @@ Rainbow table loaded from /tmp/table.pkl with 3 chains.
 Enter hex hashes to crack (one per line), press Ctrl+D (EOF) to finish:
 
 --- Looking up hash: 5cb138284d431abd6a053a56625ec088bfb88912 ---
-Lookup Step 0: Current hash: 5cb138284d431abd6a053a56625ec088bfb88912
-Lookup Step 0: Reduced hash -> Candidate password: abc
-Lookup Step 0: Candidate not found in table. Hashing candidate for next step: a9993e364706816aba3e25717850c26c9cd0d89d
-Lookup Step 1: Current hash: a9993e364706816aba3e25717850c26c9cd0d89d
-Lookup Step 1: Reduced hash -> Candidate password: acc
-Lookup Step 1: Candidate 'acc' found in table. Recreating chain...
+Lookup Attempt starting from simulated position: 2
+Lookup Step 2, Simulation Step 2: Current hash: 5cb138284d431abd6a053a56625ec088bfb88912
+Lookup Step 2, Simulation Step 2: Reduced hash -> Candidate password: cbc
+Lookup Step 2: End candidate from simulation: cbc
+Lookup Step 2: No matching hash found. Continuing to next simulated position.
+Lookup Attempt starting from simulated position: 1
+Lookup Step 1, Simulation Step 1: Current hash: 5cb138284d431abd6a053a56625ec088bfb88912
+Lookup Step 1, Simulation Step 1: Reduced hash -> Candidate password: bbc
+Lookup Step 1, Simulation Step 2: Current hash: 0fbe2a58568b4590569588e52ed6a7da4e91b6ab
+Lookup Step 1, Simulation Step 2: Reduced hash -> Candidate password: cca
+Lookup Step 1: End candidate from simulation: cca
+Lookup Step 1: Candidate 'cca' found in table. Recreating chain...
 Lookup Step 1: Starting chain recreation from: ccc
 Lookup Step 1, Chain Step 0: Password: ccc -> Hash: f36b4825e5db2cf7dd2d2593b3f5c24c0311d8b2
 Lookup Step 1, Chain Step 0: Reduced Hash -> Password: bbb
@@ -231,10 +237,9 @@ Lookup Step 1, Chain Step 1: Target hash matched! Found password: bbb
 Cracked 5cb138284d431abd6a053a56625ec088bfb88912: bbb
 
 Cracked 1 out of 1 provided hashes.
-
 ```
 
-We can see after the 2nd reduction, it hit `ccc` chain ending `acc`. Then the password is recovered by rebuilding the chain in forward order.
+We can see after the 2nd reduction, it hit `ccc` chain's ending `cca`. Then the password is recovered by rebuilding the chain in forward order.
 
 Obviously this table is not comprehensive and some hash cannot be found.
 
@@ -248,15 +253,35 @@ Rainbow table loaded from /tmp/table.pkl with 3 chains.
 Enter hex hashes to crack (one per line), press Ctrl+D (EOF) to finish:
 
 --- Looking up hash: 84a516841ba77a5b4648de2cd0dfcb30ea46dbb4 ---
-Lookup Step 0: Current hash: 84a516841ba77a5b4648de2cd0dfcb30ea46dbb4
-Lookup Step 0: Reduced hash -> Candidate password: cbc
-Lookup Step 0: Candidate not found in table. Hashing candidate for next step: 41db5f59263af68fd3c236750c813efd12f6365a
-Lookup Step 1: Current hash: 41db5f59263af68fd3c236750c813efd12f6365a
-Lookup Step 1: Reduced hash -> Candidate password: cba
-Lookup Step 1: Candidate not found in table. Hashing candidate for next step: d9f0509fb7e8bd7d4c4b627dfec70c0c0e01fb34
-Lookup Step 2: Current hash: d9f0509fb7e8bd7d4c4b627dfec70c0c0e01fb34
-Lookup Step 2: Reduced hash -> Candidate password: aa
-Lookup Step 2: Candidate not found in table. Hashing candidate for next step: e0c9035898dd52fc65c41454cec9c4d2611bfb37
+Lookup Attempt starting from simulated position: 2
+Lookup Step 2, Simulation Step 2: Current hash: 84a516841ba77a5b4648de2cd0dfcb30ea46dbb4
+Lookup Step 2, Simulation Step 2: Reduced hash -> Candidate password: bcc
+Lookup Step 2: End candidate from simulation: bcc
+Lookup Step 2: Candidate 'bcc' found in table. Recreating chain...
+Lookup Step 2: Starting chain recreation from: a
+Lookup Step 2, Chain Step 0: Password: a -> Hash: 86f7e437faa5a7fce15d1ddcb9eaeaea377667b8
+Lookup Step 2, Chain Step 0: Reduced Hash -> Password: bac
+Lookup Step 2, Chain Step 1: Password: bac -> Hash: 5e4dec23c9afa48bd5bee3daa2a0ab66e147012b
+Lookup Step 2, Chain Step 1: Reduced Hash -> Password: bca
+Lookup Step 2, Chain Step 2: Password: bca -> Hash: 31428e09ee847e56ed6a08a07d6baff4ce56070c
+Lookup Step 2, Chain Step 2: Reduced Hash -> Password: bcc
+Lookup Step 2: No matching hash found. Continuing to next simulated position.
+Lookup Attempt starting from simulated position: 1
+Lookup Step 1, Simulation Step 1: Current hash: 84a516841ba77a5b4648de2cd0dfcb30ea46dbb4
+Lookup Step 1, Simulation Step 1: Reduced hash -> Candidate password: acc
+Lookup Step 1, Simulation Step 2: Current hash: 5e942a2261672f81ad3519b878a9265eb44fdeba
+Lookup Step 1, Simulation Step 2: Reduced hash -> Candidate password: aa
+Lookup Step 1: End candidate from simulation: aa
+Lookup Step 1: No matching hash found. Continuing to next simulated position.
+Lookup Attempt starting from simulated position: 0
+Lookup Step 0, Simulation Step 0: Current hash: 84a516841ba77a5b4648de2cd0dfcb30ea46dbb4
+Lookup Step 0, Simulation Step 0: Reduced hash -> Candidate password: cbc
+Lookup Step 0, Simulation Step 1: Current hash: 41db5f59263af68fd3c236750c813efd12f6365a
+Lookup Step 0, Simulation Step 1: Reduced hash -> Candidate password: aca
+Lookup Step 0, Simulation Step 2: Current hash: f64bb73095341d354a088601cad0cdead52f7b75
+Lookup Step 0, Simulation Step 2: Reduced hash -> Candidate password: bab
+Lookup Step 0: End candidate from simulation: bab
+Lookup Step 0: No matching hash found. Continuing to next simulated position.
 --- Lookup failed: Password not found ---
 Failed to crack 84a516841ba77a5b4648de2cd0dfcb30ea46dbb4
 
@@ -411,6 +436,7 @@ He also set up a testing framework for verifying correctness and performance, co
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
+
 
 
 
