@@ -3,6 +3,7 @@ from .base import BaseRainbowTable
 from .rainbow_table import RainbowTable
 from .random_seed import RandomSeededRainbowTableMixin
 from .printing import DemoPrintingMixin
+from .bench import LookupBenchmarkMixin
 
 
 class RandomSeededRainbowTable(RandomSeededRainbowTableMixin, RainbowTable):
