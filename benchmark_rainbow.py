@@ -6,7 +6,7 @@ import itertools
 import logging # Import logging to suppress output
 import random # Import random for Monte Carlo method
 
-from attacks.rainbow_table import RandomSeededRainbowTable
+from attacks.rainbow_table import RandomSeededRainbowTableMixin, LookupBenchmarkMixin, RainbowTable
 
 
 def run_benchmark(args_list=None):
@@ -53,8 +53,12 @@ def run_benchmark(args_list=None):
         # print(f"Error: Invalid hash algorithm '{args.hash_algorithm}'.") # Do not print errors in benchmark
         return # Exit if invalid hash algorithm
 
-    # Initialize the table object outside of timeit
-    rainbow_table_obj = RandomSeededRainbowTable(CHARSET, MAX_LEN, CHAIN_LENGTH, hash_func)
+    # Define the CustomRainbowTable class directly within the function
+    class CustomRainbowTable(RandomSeededRainbowTableMixin, LookupBenchmarkMixin, RainbowTable):
+        pass
+
+    # Initialize the table object outside of timeit, using the benchmark mixin
+    rainbow_table_obj = CustomRainbowTable(CHARSET, MAX_LEN, CHAIN_LENGTH, hash_func)
 
     # Measure build time using timeit
     # Only time the call to build_random_table
@@ -93,11 +97,10 @@ def run_benchmark(args_list=None):
     # Measure time to crack each password using timeit
     cracking_times = []
     cracked_count = 0 # Counter for cracked passwords
-
-    # Convert generator to list to iterate multiple times if needed (though not needed for timeit(number=1))
-    # This also allows getting the total number of passwords being cracked
     total_passwords_to_crack = 0
-
+    # Lists to store reduction call counts
+    all_reduction_calls = []
+    successful_reduction_calls = []
 
     for pwd in password_generator:
         total_passwords_to_crack += 1
@@ -106,12 +109,14 @@ def run_benchmark(args_list=None):
         # Use number=1 for measuring individual crack time
         try:
             start_time = timeit.default_timer() # Use default_timer for potentially better resolution
-            found_pwd = rainbow_table_obj.lookup_hash(hashed_pwd)
+            found_pwd, reduction_calls = rainbow_table_obj.lookup_hash(hashed_pwd) # Get reduction calls
             end_time = timeit.default_timer()
             cracking_times.append(end_time - start_time)
+            all_reduction_calls.append(reduction_calls) # Store reduction calls for all attempts
 
             if found_pwd:
                 cracked_count += 1
+                successful_reduction_calls.append(reduction_calls) # Store reduction calls for successful attempts
 
         except Exception as e:
             raise RuntimeError() from e
@@ -126,6 +131,9 @@ def run_benchmark(args_list=None):
         stdev_time = statistics.stdev(cracking_times) if len(cracking_times) > 1 else 0
         success_rate = (cracked_count / total_passwords_to_crack) * 100 if total_passwords_to_crack > 0 else 0
 
+        # Calculate average reduction calls
+        avg_all_reduction_calls = statistics.mean(all_reduction_calls) if all_reduction_calls else 0
+        avg_successful_reduction_calls = statistics.mean(successful_reduction_calls) if successful_reduction_calls else 0
 
         print(f"Build time: {build_time:.6f}")
         print(f"Crack time (min): {min_time:.6f}")
@@ -133,6 +141,8 @@ def run_benchmark(args_list=None):
         print(f"Crack time (average): {avg_time:.6f}")
         print(f"Crack time (stdev): {stdev_time:.6f}")
         print(f"Cracking success rate: {success_rate:.2f}%")
+        print(f"Average reduction calls (all attempts): {avg_all_reduction_calls:.2f}")
+        print(f"Average reduction calls (successful cracks): {avg_successful_reduction_calls:.2f}")
 
     else:
         # print("No passwords to crack for the given parameters.") # Do not print in benchmark
