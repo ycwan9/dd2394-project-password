@@ -323,19 +323,15 @@ Metrics to collect
 
 • Build time — time to build the rainbow table (approx proportional to m * t).
 
-• Crack time — per-target min/max/avg/stdev across sample targets.
+• Crack time — per-target min/max/avg/stdev across sample targets, number of iterations.
 
 • Success rate — fraction of sampled targets cracked by the table (empirical coverage).
-
-• Table size on disk — stores the number of endpoints (≈ m entries).
 
 • Merge ratio — empirical_coverage / theoretical_coverage (diagnostic for reduction function and chain merges).
 
 Theoretical coverage estimate
 
 For parameters:
-
-• N = total password space (sum_{k=1..L} |C|^k)
 
 • m = number of chains
 
@@ -381,6 +377,22 @@ Interpreting results
 • Build time should roughly scale with m * t. If not, check for logging or I/O overhead and optimize.
 
 • For given m, increasing t has diminishing returns because chains start to overlap.
+
+## Benchmark results
+
+We run benchmark in a password space of all lower case letters (a-z) with maximum length of 3.
+
+For the table build time, we observe it bilinear relation with chain number and chain length, which meets with the expected result and algorithm complexity analysis.
+
+![plot of build time](img/bench_time.png)
+
+The success rate increases with larger chain number or chain length, however, the increment weakens gradually when the total counts approaches password space size, resulting a decreased table efficiency. This is shown in Philippe Oechslin's original work.
+
+![plot of success rate](img/bench_rate.png)
+
+We measure the average cracking time by the number of iterations (total number of calls to reduction/hash function) per cracking. The result shows a quadratic relation with chain length, which meets the algorithm complexity analysis.
+
+![plot of cracking iterations](img/bench_count.png)
 
 ## Test artifacts and CI 
 
@@ -436,6 +448,7 @@ He also set up a testing framework for verifying correctness and performance, co
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
+
 
 
 
