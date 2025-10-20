@@ -31,6 +31,80 @@ Online documentation:
 
 Course materials: DD2394 KTH — (In)secure hash function Labs.
 
+## Background & Motivation
+
+Passwords remain the dominant authentication mechanism. Storing passwords in plaintext is insecure: any breach yields immediate credential compromise. Instead systems store a digest produced by a cryptographic hash function. However, attackers use offline cracking methods to recover passwords from hashes. Understanding these methods and their costs is central to designing safe password storage practices (unique salts, slow hashing).
+
+Key terms:
+
+• Hash function: deterministic mapping H:{0,1}∗→{0,1}𝑛that is one-way and collision resistant (ideally).
+
+• Salt: a random per-password value 𝑠combined with the password before hashing.
+
+• Reduction function: in rainbow tables, a deterministic mapping from hash space back to candidate passwords.
+
+## Why hash passwords and why salt?
+## Hashing rationale
+
+• Confidentiality: Storage of 𝐻(𝑝) (instead of 𝑝) prevents immediate exposure of plaintext if a leak occurs.
+
+• Verification: Authentication checks 𝐻(𝑝candidate)=?𝐻(𝑝stored).
+
+• One-way property: Hashes should make inversion (recovering 𝑝from 𝐻(𝑝)) computationally infeasible.
+
+## Role of salts
+
+Salts are random, unique per account values 𝑠stored alongside hash output. Salting provides:
+
+• Rainbow-table defense: Precomputed hash→plaintext tables target a single hash mapping; adding a unique salt changes outputs and invalidates generic tables.
+
+• Hiding reuse: Identical passwords across accounts produce different salted hashes, preventing easy detection of shared credentials.
+
+• Cost increase for attackers: With unique salts, attackers must perform expensive work for each account rather than reuse precomputation.
+
+Best practice: use a unique, cryptographically-random salt per password and prefer memory-hard slow hashes (Argon2id, scrypt, bcrypt) in production.
+
+## How the cracking algorithms work
+## Brute-force attack
+
+• What: Try every possible candidate from a defined charset and length range.
+
+• How: Generate candidates (e.g., 'a'..'z', lengths 1..L), compute the hash for each candidate, and compare it to the target hash.
+
+• When effective: Small keyspaces (e.g., PINs, very short passwords).
+
+• Complexity: Exponential in password length: if charset size is |C| and max length L, candidates ≈ ∑_{k=1..L} |C|^k.
+
+• Mitigation: Use long, high-entropy passwords and slow hashing functions to make each hash check expensive.
+
+## Dictionary attack
+
+• What: Try likely human-chosen passwords from a curated wordlist (optionally with simple transforms like capitalization, suffix numbers).
+
+• How: Iterate the list, optionally apply transformations (password -> Password1, leet substitutions), hash each candidate, compare to the target.
+
+• When effective: Most real-world passwords are weak or based on words — a small wordlist often yields many matches quickly.
+
+• Mitigation: Enforce password complexity, check against known breach lists, and use unique salts + slow hashes.
+
+## Rainbow-table attack (time–space tradeoff)
+
+• What: Precompute and store chains of alternating hash and reduction operations so many hashes can be cracked faster at lookup time, at the cost of precomputation and storage.
+
+• How : Choose a reduction function R that maps a hash back to a candidate password; for many starting seeds s, compute a chain:
+```
+s -> H(s) -> R(H(s)) -> H(R(H(s))) -> R(H(...)) -> ... (t steps)
+```
+
+Store only the pair (start, end) for each chain.
+Given a target hash, simulate reduction/hash sequences (for up to t steps) looking for any chain end in the table; if you hit an endpoint, reconstruct the chain from its start to find the matching plaintext.
+
+• Key idea: Spend time and storage up front (build phase) so future lookups are faster.
+
+• Limitations: Chains can merge (collisions), lowering coverage; reduction design matters (classical rainbow tables use step-dependent reductions R_i to reduce merges).
+
+• Why salts break it: A unique salt changes the hash output for the same password, so a single rainbow table (which assumes a fixed hash function with no per-password variation) cannot be reused — the attacker must rebuild tables for each salt, making the attack impractical.
+
 ## Documentation of the Project
 ## Overview
 
