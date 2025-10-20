@@ -93,7 +93,7 @@ Best practice: use a unique, cryptographically-random salt per password and pref
 
 • How : Choose a reduction function R that maps a hash back to a candidate password; for many starting seeds s, compute a chain:
 ```
-s -> H(s) -> R(H(s)) -> H(R(H(s))) -> R(H(...)) -> ... (t steps)
+s -> H(s) -> R_0(H(s)) -> H(R_0(H(s))) -> R_1(H(...)) -> ... (t steps)
 ```
 
 Store only the pair (start, end) for each chain.
@@ -522,6 +522,7 @@ He also set up a testing framework for verifying correctness and performance, co
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
+
 
 
 
